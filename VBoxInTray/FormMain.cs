@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -38,14 +39,15 @@ namespace VBoxInTray
                 new ToolStripMenuItemR("Show", menuShowSeparate_Click, () => machine.CanShowSeparate),
                 new ToolStripMenuItemR("Launch Manager", menuLaunchManager_Click, () => true),
                 new ToolStripSeparator(),
-                new ToolStripMenuItemR("Exit now", menuExitNow_Click, () => machine.CanSaveState),
-                new ToolStripMenuItemR("Exit", menuExit_Click, () => true),
+                new ToolStripMenuItemR("Exit now", menuExitNow_Click, () => true),
+                new ToolStripMenuItemR("Exit", menuExit_Click, () => machine.CanSaveState),
             });
             notifyIcon.Icon = Icon;
 
             machineStateChanged += notifyIconTextUpdator;
             machineStateChanged += updateMenuItemsUsability;
             machineStateChanged += updateNotifyIcon;
+            machineStateChanged += notifyForStateChangement;
 
             checkTimer = new DispatcherTimer();
             checkTimer.Interval = new TimeSpan(0, 0, 0, 0, 200);
@@ -121,48 +123,74 @@ namespace VBoxInTray
             }
         }
 
+        private void notifyForStateChangement(VirtualBox.MachineState newState)
+        {
+            notifyIcon.BalloonTipText = Utils.MachineStateToString(newState);
+            notifyIcon.BalloonTipTitle = machine.Name;
+            notifyIcon.ShowBalloonTip(1000);
+        }
+
+        private void notifyForFailedOperations(string toDoWhat, int errCode)
+        {
+            notifyIcon.BalloonTipText = string.Format("Failed to {0}: 0x{1:X8}.", toDoWhat, errCode);
+            notifyIcon.BalloonTipTitle = machine.Name;
+            notifyIcon.ShowBalloonTip(1000);
+        }
+
+        private void tryToDoAndCatchCOMExcept(Action action, string toDoWhat)
+        {
+            try
+            {
+                action();
+            }
+            catch (COMException ex)
+            {
+                notifyForFailedOperations(toDoWhat, ex.ErrorCode);
+            }
+        }
+
         private void menuPowerUp_Click(object sender, EventArgs e)
         {
-            machine.PowerUp();
+            tryToDoAndCatchCOMExcept(() => machine.PowerUp(), "power up");
         }
 
         private void menuPowerDown_Click(object sender, EventArgs e)
         {
             if (!Utils.AskFor(string.Format("Really power down {0}?", machine.Name))) return;
-            machine.PowerDown();
+            tryToDoAndCatchCOMExcept(() => machine.PowerDown(), "power down");
         }
 
         private void menuSaveState_Click(object sender, EventArgs e)
         {
-            machine.SaveState();
+            tryToDoAndCatchCOMExcept(() => machine.SaveState(), "save state");
         }
 
         private void menuPause_Click(object sender, EventArgs e)
         {
-            machine.Pause();
+            tryToDoAndCatchCOMExcept(() => machine.Pause(), "pause");
         }
 
         private void menuResume_Click(object sender, EventArgs e)
         {
-            machine.Resume();
+            tryToDoAndCatchCOMExcept(() => machine.Resume(), "resume");
         }
 
         private void menuReset_Click(object sender, EventArgs e)
         {
             if (!Utils.AskFor(string.Format("Really reset {0}?", machine.Name))) return;
-            machine.Reset();
+            tryToDoAndCatchCOMExcept(() => machine.Reset(), "reset");
         }
 
         private void menuAcpiPower_Click(object sender, EventArgs e)
         {
             if (!Utils.AskFor(string.Format("Really press power button of {0}?", machine.Name))) return;
-            machine.AcpiPower();
+            tryToDoAndCatchCOMExcept(() => machine.AcpiPower(), "send ACPI power button event");
         }
 
         private void menuAcpiSleep_Click(object sender, EventArgs e)
         {
             if (!Utils.AskFor(string.Format("Really press sleep button of {0}?", machine.Name))) return;
-            machine.AcpiSleep();
+            tryToDoAndCatchCOMExcept(() => machine.AcpiSleep(), "send ACPI power button event");
         }
 
         private void menuLaunchManager_Click(object sender, EventArgs e)
@@ -173,6 +201,7 @@ namespace VBoxInTray
         private void menuShowSeparate_Click(object sender, EventArgs e)
         {
             machine.ShowSeparate();
+            tryToDoAndCatchCOMExcept(() => machine.AcpiSleep(), "show this machine");
         }
 
         private void menuExitNow_Click(object sender, EventArgs e)
