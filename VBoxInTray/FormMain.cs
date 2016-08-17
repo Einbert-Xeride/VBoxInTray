@@ -38,7 +38,7 @@ namespace VBoxInTray
                 new ToolStripMenuItemR("Show", menuShowSeparate_Click, () => machine.CanShowSeparate),
                 new ToolStripMenuItemR("Launch Manager", menuLaunchManager_Click, () => true),
                 new ToolStripSeparator(),
-                new ToolStripMenuItemR("Exit now", menuExit_Click, () => machine.CanSaveState),
+                new ToolStripMenuItemR("Exit now", menuExitNow_Click, () => machine.CanSaveState),
                 new ToolStripMenuItemR("Exit", menuExit_Click, () => true),
             });
             notifyIcon.Icon = Icon;
@@ -56,6 +56,13 @@ namespace VBoxInTray
             {
                 machine.PowerUp();
             }
+        }
+
+        // Never show this form.
+        protected override void OnVisibleChanged(EventArgs e)
+        {
+            base.OnVisibleChanged(e);
+            this.Visible = false;
         }
 
         private void checkTimer_Tick(object sender, EventArgs e)
