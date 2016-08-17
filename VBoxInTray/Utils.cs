@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -80,6 +81,16 @@ namespace VBoxInTray
         public static bool AskFor(string question)
         {
             return MessageBox.Show(question, Application.ProductName, MessageBoxButtons.YesNo) == DialogResult.Yes;
+        }
+
+        public static string DateTimeShortRepr(DateTime dt)
+        {
+            return string.Format("{0:D4}{1:D2}{2:D2}-{3:D2}{4:D2}{5:D2}-{6:D4}", dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, dt.Second, dt.Millisecond);
+        }
+
+        public static double SecondsSinceStartUp()
+        {
+            return (DateTime.Now - Process.GetCurrentProcess().StartTime).TotalSeconds;
         }
     }
 }

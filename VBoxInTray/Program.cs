@@ -20,6 +20,8 @@ namespace VBoxInTray
         [STAThread]
         static void Main()
         {
+            AppDomain.CurrentDomain.UnhandledException += unhandledException;
+
             vbox = new VirtualBox.VirtualBox();
 
             try
@@ -28,14 +30,26 @@ namespace VBoxInTray
                 Application.SetCompatibleTextRenderingDefault(false);
 
                 var formSelectMachine = new FormSelectMachine();
-                if (formSelectMachine.ShowDialog() != DialogResult.OK) Application.Exit();
-                
+                if (formSelectMachine.ShowDialog() != DialogResult.OK)
+                {
+                    Application.Exit();
+                    return;
+                }
+
+                var log = new VboxLogWatcher(formSelectMachine.SelectedVm);
+                Logging.Instance.AddWatcher(log);
+
                 Application.Run(new FormMain(formSelectMachine.SelectedVm, formSelectMachine.ShouldPowerOn));
             }
             finally
             {
                 vbox = null;
             }
+        }
+
+        private static void unhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            Logging.Instance.Fatal("unhandled", e.ExceptionObject.ToString());
         }
     }
 }

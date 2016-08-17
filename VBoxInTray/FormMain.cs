@@ -48,6 +48,7 @@ namespace VBoxInTray
             machineStateChanged += updateMenuItemsUsability;
             machineStateChanged += updateNotifyIcon;
             machineStateChanged += notifyForStateChangement;
+            machineStateChanged += logStateChangement;
 
             checkTimer = new DispatcherTimer();
             checkTimer.Interval = new TimeSpan(0, 0, 0, 0, 200);
@@ -58,6 +59,11 @@ namespace VBoxInTray
             {
                 machine.PowerUp();
             }
+        }
+
+        private void logStateChangement(VirtualBox.MachineState newState)
+        {
+            Logging.Instance.Info("status", string.Format("changed to status {0}", Utils.MachineStateToString(newState)));
         }
 
         // Never show this form.
@@ -146,71 +152,90 @@ namespace VBoxInTray
             catch (COMException ex)
             {
                 notifyForFailedOperations(toDoWhat, ex.ErrorCode);
+                Logging.Instance.Error("vboxsdk", ex.ToString());
             }
+        }
+
+        private void logOperation(string op)
+        {
+            Logging.Instance.Verbose("operation", string.Format("Doing '{0}'.", op));
         }
 
         private void menuPowerUp_Click(object sender, EventArgs e)
         {
+            logOperation("power up");
             tryToDoAndCatchCOMExcept(() => machine.PowerUp(), "power up");
         }
 
         private void menuPowerDown_Click(object sender, EventArgs e)
         {
             if (!Utils.AskFor(string.Format("Really power down {0}?", machine.Name))) return;
+            logOperation("power down");
             tryToDoAndCatchCOMExcept(() => machine.PowerDown(), "power down");
         }
 
         private void menuSaveState_Click(object sender, EventArgs e)
         {
+            logOperation("save state");
             tryToDoAndCatchCOMExcept(() => machine.SaveState(), "save state");
         }
 
         private void menuPause_Click(object sender, EventArgs e)
         {
+            logOperation("pause");
             tryToDoAndCatchCOMExcept(() => machine.Pause(), "pause");
         }
 
         private void menuResume_Click(object sender, EventArgs e)
         {
+            logOperation("resume");
             tryToDoAndCatchCOMExcept(() => machine.Resume(), "resume");
         }
 
         private void menuReset_Click(object sender, EventArgs e)
         {
             if (!Utils.AskFor(string.Format("Really reset {0}?", machine.Name))) return;
+            logOperation("reset");
             tryToDoAndCatchCOMExcept(() => machine.Reset(), "reset");
         }
 
         private void menuAcpiPower_Click(object sender, EventArgs e)
         {
             if (!Utils.AskFor(string.Format("Really press power button of {0}?", machine.Name))) return;
+            logOperation("acpi power");
             tryToDoAndCatchCOMExcept(() => machine.AcpiPower(), "send ACPI power button event");
         }
 
         private void menuAcpiSleep_Click(object sender, EventArgs e)
         {
             if (!Utils.AskFor(string.Format("Really press sleep button of {0}?", machine.Name))) return;
+            logOperation("acpi sleep");
             tryToDoAndCatchCOMExcept(() => machine.AcpiSleep(), "send ACPI power button event");
         }
 
         private void menuLaunchManager_Click(object sender, EventArgs e)
         {
+            logOperation("launch manager");
+            Logging.Instance.Verbose("operation", string.Format("VirtualBox in {0}", Utils.GetVirtualBoxInstallationPath()));
             Machine.LaunchVBoxManager();
         }
 
         private void menuShowSeparate_Click(object sender, EventArgs e)
         {
+            logOperation("show separate");
             machine.ShowSeparate();
             tryToDoAndCatchCOMExcept(() => machine.AcpiSleep(), "show this machine");
         }
 
         private void menuExitNow_Click(object sender, EventArgs e)
         {
+            logOperation("exit now");
             Close();
         }
 
         private void menuExit_Click(object sender, EventArgs e)
         {
+            logOperation("exit");
             if (machine.CanSaveState) machine.SaveState();
             notifyIcon.ContextMenuStrip.Enabled = false;
             machineStateChanged += closeWindowOnNonTrnsient;
