@@ -28,6 +28,11 @@ namespace VBoxInTray
             watchers.Add(watcher);
         }
 
+        public int WatcherCount
+        {
+            get { return watchers.Count; }
+        }
+
         public void Log(string tag, LogLevel level, string message)
         {
             if (level == LogLevel.NOTHING) return;

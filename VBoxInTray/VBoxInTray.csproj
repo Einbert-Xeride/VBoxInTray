@@ -78,6 +78,7 @@
     <Compile Include="FormSelectMachine.Designer.cs">
       <DependentUpon>FormSelectMachine.cs</DependentUpon>
     </Compile>
+    <Compile Include="GetOpt.cs" />
     <Compile Include="Logging.cs" />
     <Compile Include="Machine.cs" />
     <Compile Include="Program.cs" />

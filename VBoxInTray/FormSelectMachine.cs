@@ -18,15 +18,16 @@ namespace VBoxInTray
             get { return selectedVm; }
         }
 
-        private bool shouldPowerOn = true;
+        private bool shouldPowerOn;
         public bool ShouldPowerOn
         {
             get { return shouldPowerOn; }
         }
 
         private List<VirtualBox.IMachine> vms;
-        public FormSelectMachine()
+        public FormSelectMachine(bool shouldPowerOn = true)
         {
+            this.shouldPowerOn = shouldPowerOn;
             Icon = Properties.Resources.vboxintray;
             vms = new List<VirtualBox.IMachine>(Program.VBox.Machines.Cast<VirtualBox.IMachine>());
             string[] vmNames = new string[vms.Count];
@@ -37,6 +38,7 @@ namespace VBoxInTray
 
             InitializeComponent();
 
+            checkBoxPowerUp.Checked = shouldPowerOn;
             listBoxMachines.Items.AddRange(vmNames);
         }
 

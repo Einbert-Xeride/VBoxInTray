@@ -23,6 +23,32 @@ namespace VBoxInTray
         {
             AppDomain.CurrentDomain.UnhandledException += unhandledException;
 
+            string optMachineName = null;
+            bool optPowerUp = true;
+
+            try
+            {
+                foreach (var kvp in GetOpt.Getopt(Environment.GetCommandLineArgs(), "m:sh"))
+                {
+                    if (kvp.Key == 'm') optMachineName = kvp.Value;
+                    if (kvp.Key == 's') optPowerUp = false;
+                    if (kvp.Key == 'h')
+                    {
+                        MessageBox.Show("-m MachineName: Launch machine MachineName.\n" +
+                                        "-s: Don't power up immediately.\n" +
+                                        "-h: Show this help.");
+                        Application.Exit();
+                        Environment.Exit(0);
+                    }
+                }
+            }
+            catch (GetOpt.GetoptException ex)
+            {
+                MessageBox.Show(ex.Message);
+                Application.Exit();
+                Environment.Exit(1);
+            }
+
             vbox = new VirtualBox.VirtualBox();
 
             try
@@ -30,17 +56,37 @@ namespace VBoxInTray
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
 
-                var formSelectMachine = new FormSelectMachine();
-                if (formSelectMachine.ShowDialog() != DialogResult.OK)
+                VirtualBox.IMachine vm = null;
+
+                if (optMachineName == null)
                 {
-                    Application.Exit();
-                    return;
+                    var formSelectMachine = new FormSelectMachine(optPowerUp);
+                    if (formSelectMachine.ShowDialog() != DialogResult.OK)
+                    {
+                        Application.Exit();
+                        return;
+                    }
+                    vm = formSelectMachine.SelectedVm;
+                    optPowerUp = formSelectMachine.ShouldPowerOn;
+                }
+                else
+                {
+                    try
+                    {
+                        vm = vbox.FindMachine(optMachineName);
+                    }
+                    catch (COMException ex)
+                    {
+                        MessageBox.Show(ex.Message);
+                        Application.Exit();
+                        return;
+                    }
                 }
 
-                var log = new VboxLogWatcher(formSelectMachine.SelectedVm);
+                var log = new VboxLogWatcher(vm);
                 Logging.Instance.AddWatcher(log);
 
-                Application.Run(new FormMain(formSelectMachine.SelectedVm, formSelectMachine.ShouldPowerOn));
+                Application.Run(new FormMain(vm, optPowerUp));
             }
             finally
             {
@@ -51,7 +97,14 @@ namespace VBoxInTray
 
         private static void unhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            Logging.Instance.Fatal("unhandled", e.ExceptionObject.ToString());
+            if (Logging.Instance.WatcherCount != 0)
+            {
+                Logging.Instance.Fatal("unhandled", e.ExceptionObject.ToString());
+            }
+            else
+            {
+                MessageBox.Show(e.ExceptionObject.ToString(), "Internal Error");
+            }
         }
     }
 }
