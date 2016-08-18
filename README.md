@@ -15,9 +15,9 @@ This program is still in pre-alpha, use it with caution please.
 - [x] Save the machine state when quitting.
 - [x] Show the virtual machine with VirtualBox GUI without saving/resuming it.
 - [x] Launch VirtualBox Manager for further managements.
+- [x] Command line options.
+- [x] Logging to record running states.
 
 ## Todo List
 
-- [ ] Prevent host computer from shutting down before saving current virtual machine.
-- [ ] Command line options.
-- [ ] Logging to record running states.
+- [ ] WIP: Prevent host computer from shutting down before saving current virtual machine.
