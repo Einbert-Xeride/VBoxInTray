@@ -120,7 +120,8 @@ namespace VBoxInTray
         {
             get
             {
-                return IsOnline && !IsTransient;
+                return vm.State == VirtualBox.MachineState.MachineState_Paused
+                    || vm.State == VirtualBox.MachineState.MachineState_Running;
             }
         }
 
@@ -247,8 +248,12 @@ namespace VBoxInTray
         public VirtualBox.IProgress ShowSeparate()
         {
             if (!CanShowSeparate) return null;
+            if (State != VirtualBox.MachineState.MachineState_Paused) Pause();
             VirtualBox.Session session = new VirtualBox.Session();
-            return vm.LaunchVMProcess(session, "separate", ""); // WARNING: undocumented feature
+            var progress = vm.LaunchVMProcess(session, "separate", ""); // WARNING: undocumented feature
+            progress.WaitForCompletion(-1);
+            if (progress.Completed == WTypes.VARIANT_TRUE) Resume();
+            return progress;
         }
 
         #endregion

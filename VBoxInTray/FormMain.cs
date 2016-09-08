@@ -238,10 +238,10 @@ namespace VBoxInTray
             logOperation("exit");
             if (machine.CanSaveState) machine.SaveState();
             notifyIcon.ContextMenuStrip.Enabled = false;
-            machineStateChanged += closeWindowOnNonTrnsient;
+            machineStateChanged += closeWindowOnNonTransient;
         }
 
-        private void closeWindowOnNonTrnsient(VirtualBox.MachineState newState)
+        private void closeWindowOnNonTransient(VirtualBox.MachineState newState)
         {
             if (!machine.IsTransient) Close();
         }

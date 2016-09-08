@@ -57,6 +57,7 @@ namespace VBoxInTray
                 }
 
                 sw.Close();
+                // FIXME: Unexpected ObjectExposedException here when closing
 
                 disposedValue = true;
             }
